@@ -1,102 +1,83 @@
-const express = require('express');
-const multer = require('multer');
-const cors = require('cors');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const fs = require('fs');
-const path = require('path');
+const express = require("express");
+const multer = require("multer");
+const cors = require("cors");
+const path = require("path");
+const fs = require("fs");
 
 const app = express();
 const PORT = 3000;
-const SECRET = 'CSS_SEGURIDAD_2026';
 
+// ======================
+// MIDDLEWARES
+// ======================
 app.use(cors());
 app.use(express.json());
 
-// Crear carpetas
-['uploads/talonarios', 'uploads/cedulas'].forEach(dir => {
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-});
-
-// Usuario administrador
-const users = [
-    {
-        username: 'admin',
-        password: bcrypt.hashSync('css2026', 10),
-        role: 'admin'
-    }
+// ======================
+// ASEGURAR CARPETAS
+// ======================
+const rutas = [
+    "uploads",
+    "uploads/cedulas",
+    "uploads/talonarios"
 ];
 
-// LOGIN
-app.post('/login', (req, res) => {
-    const { username, password } = req.body;
-    const user = users.find(u => u.username === username);
-    if (!user) return res.status(401).json({ msg: 'Usuario inválido' });
-
-    if (!bcrypt.compareSync(password, user.password)) {
-        return res.status(401).json({ msg: 'Contraseña incorrecta' });
+rutas.forEach(ruta => {
+    if (!fs.existsSync(ruta)) {
+        fs.mkdirSync(ruta, { recursive: true });
     }
-
-    const token = jwt.sign(
-        { username: user.username, role: user.role },
-        SECRET,
-        { expiresIn: '2h' }
-    );
-
-    res.json({ token });
 });
 
-// Middleware admin
-function authAdmin(req, res, next) {
-    const token = req.headers.authorization;
-    if (!token) return res.sendStatus(403);
-
-    try {
-        const decoded = jwt.verify(token, SECRET);
-        if (decoded.role !== 'admin') return res.sendStatus(403);
-        next();
-    } catch {
-        res.sendStatus(403);
-    }
-}
-
-// Subida de archivos
-const storage = multer.diskStorage({
+// ======================
+// CONFIGURACIÓN MULTER
+// ======================
+const storage = (folder) => multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, `uploads/${req.body.type}s`);
+        cb(null, `uploads/${folder}`);
     },
     filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname);
+        const uniqueName = Date.now() + "-" + file.originalname;
+        cb(null, uniqueName);
     }
 });
 
-const upload = multer({ storage });
+const uploadCedula = multer({ storage: storage("cedulas") });
+const uploadTalonario = multer({ storage: storage("talonarios") });
 
-app.post('/upload', upload.single('file'), (req, res) => {
-    res.json({ msg: 'Archivo subido correctamente' });
+// ======================
+// RUTAS
+// ======================
+app.get("/", (req, res) => {
+    res.send("Servidor funcionando correctamente ✅");
 });
 
-// Listar archivos
-app.get('/files', authAdmin, (req, res) => {
+// Subir cédula
+app.post("/upload/cedula", uploadCedula.single("archivo"), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: "No se subió ningún archivo" });
+    }
+
     res.json({
-        talonarios: fs.readdirSync('uploads/talonarios'),
-        cedulas: fs.readdirSync('uploads/cedulas')
+        message: "Cédula subida correctamente ✅",
+        archivo: req.file.filename
     });
 });
 
-// Descargar archivo
-app.get('/download/:type/:name', authAdmin, (req, res) => {
-    const filePath = path.join(__dirname, 'uploads', req.params.type, req.params.name);
-    res.download(filePath);
+// Subir talonario
+app.post("/upload/talonario", uploadTalonario.single("archivo"), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: "No se subió ningún archivo" });
+    }
+
+    res.json({
+        message: "Talonario subido correctamente ✅",
+        archivo: req.file.filename
+    });
 });
 
-// Eliminar archivo
-app.delete('/delete/:type/:name', authAdmin, (req, res) => {
-    const filePath = path.join(__dirname, 'uploads', req.params.type, req.params.name);
-    fs.unlinkSync(filePath);
-    res.json({ msg: 'Archivo eliminado' });
-});
-
+// ======================
+// SERVIDOR
+// ======================
 app.listen(PORT, () => {
-    console.log(`Servidor activo → http://localhost:${PORT}`);
+    console.log(`Servidor activo en http://localhost:${PORT}`);
 });
