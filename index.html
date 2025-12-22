@@ -117,3 +117,30 @@ function del(type, name) {
 
 </body>
 </html>
+<script>
+const API_URL = "http://localhost:3000";
+
+async function subirArchivo(inputId, tipo) {
+    const input = document.getElementById(inputId);
+    if (!input.files.length) {
+        alert("Seleccione un archivo");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("archivo", input.files[0]);
+
+    try {
+        const res = await fetch(`${API_URL}/upload/${tipo}`, {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await res.json();
+        alert(data.message);
+        input.value = "";
+    } catch (err) {
+        alert("Error al subir archivo");
+    }
+}
+</script>
