@@ -1,1 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>CSS - Horas Extras</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
 
+<body>
+
+<div class="container">
+    <h1>CSS - Sistema de Horas Extras</h1>
+
+    <div class="section">
+        <h2>Subida de Talonarios</h2>
+        <input type="file" id="talonario">
+        <button onclick="upload('talonario')">Subir Talonario</button>
+    </div>
+
+    <div class="section">
+        <h2>Subida de Cédulas</h2>
+        <input type="file" id="cedula">
+        <button onclick="upload('cedula')">Subir Cédula</button>
+    </div>
+
+    <div class="section">
+        <h2>Acceso Administrador</h2>
+        <input id="user" placeholder="Usuario">
+        <input id="pass" type="password" placeholder="Contraseña">
+        <button onclick="login()">Ingresar</button>
+    </div>
+
+    <div class="section">
+        <h2>Panel Administrativo</h2>
+        <button onclick="loadFiles()">Ver Archivos</button>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Archivo</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="files"></tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        © Sistema CSS Horas Extras
+    </div>
+</div>
+
+<script>
+const API = 'http://localhost:3000';
+
+function upload(type) {
+    const file = document.getElementById(type).files[0];
+    if (!file) return alert('Seleccione un archivo');
+
+    const form = new FormData();
+    form.append('file', file);
+    form.append('type', type);
+
+    fetch(API + '/upload', { method: 'POST', body: form })
+        .then(() => alert('Archivo subido correctamente'));
+}
+
+function login() {
+    fetch(API + '/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            username: user.value,
+            password: pass.value
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        localStorage.setItem('token', data.token);
+        alert('Acceso concedido');
+    });
+}
+
+function loadFiles() {
+    fetch(API + '/files', {
+        headers: { 'Authorization': localStorage.getItem('token') }
+    })
+    .then(res => res.json())
+    .then(data => {
+        files.innerHTML = '';
+        data.talonarios.forEach(f => row('talonarios', f));
+        data.cedulas.forEach(f => row('cedulas', f));
+    });
+}
+
+function row(type, name) {
+    files.innerHTML += `
+    <tr>
+        <td>${type}</td>
+        <td>${name}</td>
+        <td class="actions">
+            <a href="${API}/download/${type}/${name}" target="_blank">Descargar</a>
+            <button onclick="del('${type}','${name}')">Eliminar</button>
+        </td>
+    </tr>`;
+}
+
+function del(type, name) {
+    fetch(`${API}/delete/${type}/${name}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': localStorage.getItem('token') }
+    })
+    .then(() => loadFiles());
+}
+</script>
+
+</body>
+</html>
