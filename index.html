@@ -11,32 +11,32 @@
 <div class="container">
     <h1>CSS - Sistema de Horas Extras</h1>
 
+    <!-- Subida de Talonarios -->
     <div class="section">
         <h2>Subida de Talonarios</h2>
         <input type="file" id="talonarioFile">
-<button onclick="subirArchivo('talonarioFile','talonario')">
-    Subir Talonario
-</button>
+        <button id="btnTalonario">Subir Talonario</button>
     </div>
 
+    <!-- Subida de Cédulas -->
     <div class="section">
         <h2>Subida de Cédulas</h2>
         <input type="file" id="cedulaFile">
-<button onclick="subirArchivo('cedulaFile','cedula')">
-    Subir Cédula
-</button>
+        <button id="btnCedula">Subir Cédula</button>
     </div>
 
+    <!-- Login -->
     <div class="section">
         <h2>Acceso Administrador</h2>
         <input id="user" placeholder="Usuario">
         <input id="pass" type="password" placeholder="Contraseña">
-        <button onclick="login()">Ingresar</button>
+        <button id="btnLogin">Ingresar</button>
     </div>
 
+    <!-- Panel Administrativo -->
     <div class="section">
         <h2>Panel Administrativo</h2>
-        <button onclick="loadFiles()">Ver Archivos</button>
+        <button id="btnVerArchivos">Ver Archivos</button>
 
         <table>
             <thead>
@@ -51,80 +51,16 @@
     </div>
 
     <div class="footer">
-        © Sistema Horas Extras by Licdo Carlos E. González C. 
-
+        © Sistema Horas Extras by Licdo Carlos E. González C.
     </div>
 </div>
 
 <script>
-const API = 'http://localhost:3000';
+const API = "http://localhost:3000";
 
-function upload(type) {
-    const file = document.getElementById(type).files[0];
-    if (!file) return alert('Seleccione un archivo');
-
-    const form = new FormData();
-    form.append('file', file);
-    form.append('type', type);
-
-    fetch(API + '/upload', { method: 'POST', body: form })
-        .then(() => alert('Archivo subido correctamente'));
-}
-
-function login() {
-    fetch(API + '/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            username: user.value,
-            password: pass.value
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        localStorage.setItem('token', data.token);
-        alert('Acceso concedido');
-    });
-}
-
-function loadFiles() {
-    fetch(API + '/files', {
-        headers: { 'Authorization': localStorage.getItem('token') }
-    })
-    .then(res => res.json())
-    .then(data => {
-        files.innerHTML = '';
-        data.talonarios.forEach(f => row('talonarios', f));
-        data.cedulas.forEach(f => row('cedulas', f));
-    });
-}
-
-function row(type, name) {
-    files.innerHTML += `
-    <tr>
-        <td>${type}</td>
-        <td>${name}</td>
-        <td class="actions">
-            <a href="${API}/download/${type}/${name}" target="_blank">Descargar</a>
-            <button onclick="del('${type}','${name}')">Eliminar</button>
-        </td>
-    </tr>`;
-}
-
-function del(type, name) {
-    fetch(`${API}/delete/${type}/${name}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': localStorage.getItem('token') }
-    })
-    .then(() => loadFiles());
-}
-</script>
-
-</body>
-</html>
-<script>
-const API_URL = "http://localhost:3000";
-
+// -----------------------------
+// Subir archivo
+// -----------------------------
 async function subirArchivo(inputId, tipo) {
     const input = document.getElementById(inputId);
     if (!input.files.length) {
@@ -136,16 +72,137 @@ async function subirArchivo(inputId, tipo) {
     formData.append("archivo", input.files[0]);
 
     try {
-        const res = await fetch(`${API_URL}/upload/${tipo}`, {
+        const res = await fetch(`${API}/upload/${tipo}`, {
             method: "POST",
             body: formData
         });
 
         const data = await res.json();
-        alert(data.message);
+        alert(data.message || "Archivo subido correctamente");
         input.value = "";
     } catch (err) {
         alert("Error al subir archivo");
     }
 }
+
+// -----------------------------
+// Login
+// -----------------------------
+async function login() {
+    try {
+        const res = await fetch(`${API}/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                username: user.value,
+                password: pass.value
+            })
+        });
+
+        const data = await res.json();
+
+        if (!data.token) {
+            alert("Credenciales incorrectas");
+            return;
+        }
+
+        localStorage.setItem("token", data.token);
+        alert("Acceso concedido");
+    } catch {
+        alert("Error en el servidor");
+    }
+}
+
+// -----------------------------
+// Cargar archivos
+// -----------------------------
+async function loadFiles() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+        alert("Debe iniciar sesión");
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API}/files`, {
+            headers: { "Authorization": token }
+        });
+
+        const data = await res.json();
+        const tbody = document.getElementById("files");
+        tbody.innerHTML = "";
+
+        renderRows("talonarios", data.talonarios);
+        renderRows("cedulas", data.cedulas);
+
+    } catch {
+        alert("Error al cargar archivos");
+    }
+}
+
+// -----------------------------
+// Renderizar filas
+// -----------------------------
+function renderRows(tipo, lista) {
+    const tbody = document.getElementById("files");
+
+    lista.forEach(nombre => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${tipo}</td>
+            <td>${nombre}</td>
+            <td class="actions">
+                <a href="${API}/download/${tipo}/${nombre}" target="_blank">Descargar</a>
+                <button data-tipo="${tipo}" data-nombre="${nombre}" class="btnEliminar">
+                    Eliminar
+                </button>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+// -----------------------------
+// Eliminar archivo
+// -----------------------------
+async function eliminarArchivo(tipo, nombre) {
+    const token = localStorage.getItem("token");
+
+    try {
+        await fetch(`${API}/delete/${tipo}/${nombre}`, {
+            method: "DELETE",
+            headers: { "Authorization": token }
+        });
+
+        loadFiles();
+    } catch {
+        alert("Error al eliminar archivo");
+    }
+}
+
+// -----------------------------
+// Eventos
+// -----------------------------
+document.getElementById("btnTalonario").addEventListener("click", () => {
+    subirArchivo("talonarioFile", "talonario");
+});
+
+document.getElementById("btnCedula").addEventListener("click", () => {
+    subirArchivo("cedulaFile", "cedula");
+});
+
+document.getElementById("btnLogin").addEventListener("click", login);
+
+document.getElementById("btnVerArchivos").addEventListener("click", loadFiles);
+
+document.addEventListener("click", e => {
+    if (e.target.classList.contains("btnEliminar")) {
+        eliminarArchivo(e.target.dataset.tipo, e.target.dataset.nombre);
+    }
+});
 </script>
+
+</body>
+</html>
