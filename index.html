@@ -1,257 +1,40 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>CSS - Horas Extras</title>
-  <link rel="stylesheet" href="css/styles.css">
-  <!-- Considerar añadir una política CSP en el servidor -->
+<meta charset="UTF-8">
+<title>CSS - Horas Extras</title>
+<link rel="stylesheet" href="css/styles.css">
 </head>
 
 <body>
-  <div class="container">
+
+<div class="container">
     <h1>CSS - Sistema de Horas Extras</h1>
 
     <!-- Subida de Talonarios -->
-    <section class="section" aria-labelledby="talonarioTitle">
-      <h2 id="talonarioTitle">Subida de Talonarios</h2>
-      <label for="talonarioFile" class="sr-only">Archivo de talonario</label>
-      <input type="file" id="talonarioFile" accept=".csv,.xls,.xlsx,.pdf" aria-describedby="talonarioHelp">
-      <div id="talonarioHelp" class="help-text">Formatos permitidos: csv, xls, xlsx, pdf</div>
-      <button id="btnTalonario" type="button">Subir Talonario</button>
-    </section>
+    <div class="section">
+        <h2>Subida de Talonarios</h2>
+        <input type="file" id="talonarioFile">
+        <button id="btnTalonario">Subir Talonario</button>
+    </div>
 
     <!-- Subida de Cédulas -->
-    <section class="section" aria-labelledby="cedulaTitle">
-      <h2 id="cedulaTitle">Subida de Cédulas</h2>
-      <label for="cedulaFile" class="sr-only">Archivo de cédula</label>
-      <input type="file" id="cedulaFile" accept=".pdf,.jpg,.png" aria-describedby="cedulaHelp">
-      <div id="cedulaHelp" class="help-text">Formatos permitidos: pdf, jpg, png</div>
-      <button id="btnCedula" type="button">Subir Cédula</button>
-    </section>
+    <div class="section">
+        <h2>Subida de Cédulas</h2>
+        <input type="file" id="cedulaFile">
+        <button id="btnCedula">Subir Cédula</button>
+    </div>
 
     <!-- Login -->
-    <section class="section" aria-labelledby="loginTitle">
-      <h2 id="loginTitle">Acceso Administrador</h2>
-      <label for="user">Usuario</label>
-      <input id="user" placeholder="Usuario" required>
-      <label for="pass">Contraseña</label>
-      <input id="pass" type="password" placeholder="Contraseña" required>
-      <button id="btnLogin" type="button">Ingresar</button>
-    </section>
+    <div class="section">
+        <h2>Acceso Administrador</h2>
+        <input id="user" placeholder="Usuario">
+        <input id="pass" type="password" placeholder="Contraseña">
+        <button id="btnLogin">Ingresar</button>
+    </div>
 
     <!-- Panel Administrativo -->
-    <section class="section" aria-labelledby="panelTitle">
-      <h2 id="panelTitle">Panel Administrativo</h2>
-      <button id="btnVerArchivos" type="button">Ver Archivos</button>
-
-      <table>
-        <caption class="sr-only">Lista de archivos subidos</caption>
-        <thead>
-          <tr>
-            <th>Tipo</th>
-            <th>Archivo</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="files"></tbody>
-      </table>
-    </section>
-
-    <footer class="footer">
-      © Sistema Horas Extras by Licdo Carlos E. González C.
-    </footer>
-  </div>
-
-  <script>
-    (function () {
-      // Preferir URL relativa o configurar por entorno; evitar hardcodear http en producción
-      const API = (window.__API_BASE || "http://localhost:3000").replace(/\/$/, "");
-
-      // Helpers
-      function showAlert(msg) { alert(msg); }
-      function getToken() { return localStorage.getItem("token"); }
-      function setToken(t) { localStorage.setItem("token", t); }
-      function handleResponse(res) {
-        if (!res.ok) throw { status: res.status, statusText: res.statusText };
-        return res.json();
-      }
-      function safeTextNode(tag, text) {
-        const el = document.createElement(tag);
-        el.textContent = text;
-        return el;
-      }
-
-      // Subir archivo genérico
-      async function subirArchivo(inputId, tipo) {
-        const input = document.getElementById(inputId);
-        if (!input || !input.files || input.files.length === 0) {
-          showAlert("Seleccione un archivo");
-          return;
-        }
-        const file = input.files[0];
-        const formData = new FormData();
-        formData.append("archivo", file);
-
-        try {
-          const res = await fetch(`${API}/upload/${tipo}`, {
-            method: "POST",
-            body: formData,
-            headers: {
-              // No añadir Content-Type cuando se usa FormData
-              "Authorization": `Bearer ${getToken() || ""}`
-            }
-          });
-
-          const data = await handleResponse(res);
-          showAlert(data.message || "Archivo subido correctamente");
-          input.value = "";
-        } catch (err) {
-          console.error("upload error:", err);
-          if (err && err.status === 401) showAlert("No autorizado. Inicie sesión.");
-          else showAlert("Error al subir archivo");
-        }
-      }
-
-      // Login robusto
-      async function login() {
-        const userEl = document.getElementById("user");
-        const passEl = document.getElementById("pass");
-        const username = userEl.value.trim();
-        const password = passEl.value;
-
-        if (!username || !password) {
-          showAlert("Ingrese usuario y contraseña");
-          return;
-        }
-
-        try {
-          const res = await fetch(`${API}/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password })
-          });
-
-          const data = await handleResponse(res);
-          if (!data.token) {
-            showAlert("Credenciales incorrectas");
-            return;
-          }
-          setToken(data.token);
-          showAlert("Acceso concedido");
-        } catch (err) {
-          console.error("login error:", err);
-          showAlert("Error en el servidor");
-        }
-      }
-
-      // Cargar archivos con autorización y chequeo de datos
-      async function loadFiles() {
-        const token = getToken();
-        if (!token) {
-          showAlert("Debe iniciar sesión");
-          return;
-        }
-
-        try {
-          const res = await fetch(`${API}/files`, {
-            headers: { "Authorization": `Bearer ${token}` }
-          });
-
-          const data = await handleResponse(res);
-
-          const tbody = document.getElementById("files");
-          tbody.innerHTML = "";
-
-          if (Array.isArray(data.talonarios)) renderRows("talonarios", data.talonarios);
-          if (Array.isArray(data.cedulas)) renderRows("cedulas", data.cedulas);
-
-        } catch (err) {
-          console.error("loadFiles error:", err);
-          if (err && err.status === 401) showAlert("No autorizado. Inicie sesión.");
-          else showAlert("Error al cargar archivos");
-        }
-      }
-
-      // Renderizar filas usando DOM APIs (evitar innerHTML directo para prevenir XSS)
-      function renderRows(tipo, lista) {
-        const tbody = document.getElementById("files");
-        lista.forEach(nombre => {
-          const tr = document.createElement("tr");
-
-          const tdTipo = document.createElement("td");
-          tdTipo.textContent = tipo;
-          tr.appendChild(tdTipo);
-
-          const tdNombre = document.createElement("td");
-          tdNombre.textContent = nombre;
-          tr.appendChild(tdNombre);
-
-          const tdAcciones = document.createElement("td");
-          tdAcciones.className = "actions";
-
-          // descargar
-          const a = document.createElement("a");
-          // encodeURIComponent para evitar problemas con caracteres especiales en la URL
-          a.href = `${API}/download/${encodeURIComponent(tipo)}/${encodeURIComponent(nombre)}`;
-          a.target = "_blank";
-          a.rel = "noopener noreferrer";
-          a.textContent = "Descargar";
-          tdAcciones.appendChild(a);
-
-          // espacio
-          tdAcciones.appendChild(document.createTextNode(" "));
-
-          // eliminar
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "btnEliminar";
-          btn.dataset.tipo = tipo;
-          btn.dataset.nombre = nombre;
-          btn.textContent = "Eliminar";
-          tdAcciones.appendChild(btn);
-
-          tr.appendChild(tdAcciones);
-          tbody.appendChild(tr);
-        });
-      }
-
-      // Eliminar archivo con confirmación
-      async function eliminarArchivo(tipo, nombre) {
-        if (!confirm(`¿Eliminar ${nombre}? Esta acción no se puede deshacer.`)) return;
-        const token = getToken();
-        try {
-          const res = await fetch(`${API}/delete/${encodeURIComponent(tipo)}/${encodeURIComponent(nombre)}`, {
-            method: "DELETE",
-            headers: { "Authorization": `Bearer ${token || ""}` }
-          });
-          await handleResponse(res);
-          await loadFiles();
-        } catch (err) {
-          console.error("delete error:", err);
-          showAlert("Error al eliminar archivo");
-        }
-      }
-
-      // Eventos
-      document.addEventListener("click", (e) => {
-        const t = e.target;
-        if (t && t.classList.contains("btnEliminar")) {
-          eliminarArchivo(t.dataset.tipo, t.dataset.nombre);
-        }
-      });
-
-      document.getElementById("btnTalonario").addEventListener("click", () => subirArchivo("talonarioFile", "talonario"));
-      document.getElementById("btnCedula").addEventListener("click", () => subirArchivo("cedulaFile", "cedula"));
-      document.getElementById("btnLogin").addEventListener("click", login);
-      document.getElementById("btnVerArchivos").addEventListener("click", loadFiles);
-
-      // Exponer funciones para debugging (opcional)
-      window.__app = { loadFiles, login, subirArchivo };
-    })();
-  </script>
-</body>
-    </html>    <div class="section">
+    <div class="section">
         <h2>Panel Administrativo</h2>
         <button id="btnVerArchivos">Ver Archivos</button>
 
@@ -303,7 +86,7 @@ async function subirArchivo(inputId, tipo) {
 }
 
 // -----------------------------
-// Login
+// Login (UI only)
 // -----------------------------
 async function login() {
     try {
@@ -331,19 +114,11 @@ async function login() {
 }
 
 // -----------------------------
-// Cargar archivos
+// Cargar archivos (no requiere token en el backend)
 // -----------------------------
 async function loadFiles() {
-    const token = localStorage.getItem("token");
-    if (!token) {
-        alert("Debe iniciar sesión");
-        return;
-    }
-
     try {
-        const res = await fetch(`${API}/files`, {
-            headers: { "Authorization": token }
-        });
+        const res = await fetch(`${API}/files`);
 
         const data = await res.json();
         const tbody = document.getElementById("files");
@@ -352,7 +127,8 @@ async function loadFiles() {
         renderRows("talonarios", data.talonarios);
         renderRows("cedulas", data.cedulas);
 
-    } catch {
+    } catch (err) {
+        console.error(err);
         alert("Error al cargar archivos");
     }
 }
@@ -370,7 +146,7 @@ function renderRows(tipo, lista) {
             <td>${tipo}</td>
             <td>${nombre}</td>
             <td class="actions">
-                <a href="${API}/download/${tipo}/${nombre}" target="_blank">Descargar</a>
+                <a href="${API}/download/${tipo}/${encodeURIComponent(nombre)}" target="_blank">Descargar</a>
                 <button data-tipo="${tipo}" data-nombre="${nombre}" class="btnEliminar">
                     Eliminar
                 </button>
@@ -382,19 +158,17 @@ function renderRows(tipo, lista) {
 }
 
 // -----------------------------
-// Eliminar archivo
+// Eliminar archivo (no requiere token in backend)
 // -----------------------------
 async function eliminarArchivo(tipo, nombre) {
-    const token = localStorage.getItem("token");
-
     try {
-        await fetch(`${API}/delete/${tipo}/${nombre}`, {
-            method: "DELETE",
-            headers: { "Authorization": token }
+        await fetch(`${API}/delete/${tipo}/${encodeURIComponent(nombre)}`, {
+            method: "DELETE"
         });
 
         loadFiles();
-    } catch {
+    } catch (err) {
+        console.error(err);
         alert("Error al eliminar archivo");
     }
 }
