@@ -1,199 +1,82 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>CSS - Horas Extras</title>
-<link rel="stylesheet" href="css/styles.css">
-</head>
-
-<body>
-
-<div class="container">
-    <h1>CSS - Sistema de Horas Extras</h1>
-
-    <!-- Subida de Talonarios -->
-    <div class="section">
-        <h2>Subida de Talonarios</h2>
-        <input type="file" id="talonarioFile">
-        <button id="btnTalonario">Subir Talonario</button>
-    </div>
-
-    <!-- Subida de Cédulas -->
-    <div class="section">
-        <h2>Subida de Cédulas</h2>
-        <input type="file" id="cedulaFile">
-        <button id="btnCedula">Subir Cédula</button>
-    </div>
-
-    <!-- Login -->
-    <div class="section">
-        <h2>Acceso Administrador</h2>
-        <input id="user" placeholder="Usuario">
-        <input id="pass" type="password" placeholder="Contraseña">
-        <button id="btnLogin">Ingresar</button>
-    </div>
-
-    <!-- Panel Administrativo -->
-    <div class="section">
-        <h2>Panel Administrativo</h2>
-        <button id="btnVerArchivos">Ver Archivos</button>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>Tipo</th>
-                    <th>Archivo</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="files"></tbody>
-        </table>
-    </div>
-
-    <div class="footer">
-        © Sistema Horas Extras by Licdo Carlos E. González C.
-    </div>
-</div>
-
-<script>
-const API = "http://localhost:3000";
-
-// -----------------------------
-// Subir archivo
-// -----------------------------
-async function subirArchivo(inputId, tipo) {
-    const input = document.getElementById(inputId);
-    if (!input.files.length) {
-        alert("Seleccione un archivo");
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append("archivo", input.files[0]);
-
-    try {
-        const res = await fetch(`${API}/upload/${tipo}`, {
-            method: "POST",
-            body: formData
-        });
-
-        const data = await res.json();
-        alert(data.message || "Archivo subido correctamente");
-        input.value = "";
-    } catch (err) {
-        alert("Error al subir archivo");
-    }
-}
-
-// -----------------------------
-// Login (UI only)
-// -----------------------------
-async function login() {
-    try {
-        const res = await fetch(`${API}/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                username: user.value,
-                password: pass.value
-            })
-        });
-
-        const data = await res.json();
-
-        if (!data.token) {
-            alert("Credenciales incorrectas");
-            return;
+    <meta charset="UTF-8">
+    <title>Login - Dirección Nacional de Seguridad Institucional</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #0A1A2A; /* Azul oscuro */
+            color: white;
         }
 
-        localStorage.setItem("token", data.token);
-        alert("Acceso concedido");
-    } catch {
-        alert("Error en el servidor");
-    }
-}
+        .login-container {
+            width: 350px;
+            margin: 120px auto;
+            background: white;
+            color: #0A1A2A;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(255,255,255,0.2);
+        }
 
-// -----------------------------
-// Cargar archivos (no requiere token en el backend)
-// -----------------------------
-async function loadFiles() {
-    try {
-        const res = await fetch(`${API}/files`);
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
 
-        const data = await res.json();
-        const tbody = document.getElementById("files");
-        tbody.innerHTML = "";
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #0A1A2A;
+            border-radius: 5px;
+        }
 
-        renderRows("talonarios", data.talonarios);
-        renderRows("cedulas", data.cedulas);
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #0A1A2A;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 15px;
+        }
 
-    } catch (err) {
-        console.error(err);
-        alert("Error al cargar archivos");
-    }
-}
+        button:hover {
+            background: #123456;
+        }
 
-// -----------------------------
-// Renderizar filas
-// -----------------------------
-function renderRows(tipo, lista) {
-    const tbody = document.getElementById("files");
+        .footer {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
 
-    lista.forEach(nombre => {
-        const tr = document.createElement("tr");
+    <div class="login-container">
+        <h2>Acceso Institucional</h2>
 
-        tr.innerHTML = `
-            <td>${tipo}</td>
-            <td>${nombre}</td>
-            <td class="actions">
-                <a href="${API}/download/${tipo}/${encodeURIComponent(nombre)}" target="_blank">Descargar</a>
-                <button data-tipo="${tipo}" data-nombre="${nombre}" class="btnEliminar">
-                    Eliminar
-                </button>
-            </td>
-        `;
+        <form action="dashboard.html" method="GET">
+            <label>Usuario</label>
+            <input type="text" placeholder="Ingrese su usuario" required>
 
-        tbody.appendChild(tr);
-    });
-}
+            <label>Contraseña</label>
+            <input type="password" placeholder="Ingrese su contraseña" required>
 
-// -----------------------------
-// Eliminar archivo (no requiere token in backend)
-// -----------------------------
-async function eliminarArchivo(tipo, nombre) {
-    try {
-        await fetch(`${API}/delete/${tipo}/${encodeURIComponent(nombre)}`, {
-            method: "DELETE"
-        });
+            <button type="submit">Ingresar</button>
+        </form>
 
-        loadFiles();
-    } catch (err) {
-        console.error(err);
-        alert("Error al eliminar archivo");
-    }
-}
-
-// -----------------------------
-// Eventos
-// -----------------------------
-document.getElementById("btnTalonario").addEventListener("click", () => {
-    subirArchivo("talonarioFile", "talonario");
-});
-
-document.getElementById("btnCedula").addEventListener("click", () => {
-    subirArchivo("cedulaFile", "cedula");
-});
-
-document.getElementById("btnLogin").addEventListener("click", login);
-
-document.getElementById("btnVerArchivos").addEventListener("click", loadFiles);
-
-document.addEventListener("click", e => {
-    if (e.target.classList.contains("btnEliminar")) {
-        eliminarArchivo(e.target.dataset.tipo, e.target.dataset.nombre);
-    }
-});
-</script>
+        <div class="footer">
+            Dirección Nacional de Seguridad Institucional<br>
+            Caja de Seguro Social
+        </div>
+    </div>
 
 </body>
 </html>
