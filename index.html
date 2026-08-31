@@ -10,7 +10,7 @@
             font-family: Arial, sans-serif;
             background: var(--bg-color);
             color: var(--text-color);
-            overflow: hidden;
+            overflow-x: hidden;
             transition: background 0.5s ease, color 0.5s ease;
         }
 
@@ -56,6 +56,7 @@
         /* Contenedor del login */
         .login-container {
             width: 350px;
+            max-width: 90%;
             margin: 120px auto;
             background: var(--card-bg);
             color: var(--card-text);
@@ -79,9 +80,10 @@
             }
         }
 
-        /* Logo animado */
+        /* Logo responsive */
         .logo {
             width: 80px;
+            max-width: 30%;
             display: block;
             margin: 0 auto 15px auto;
             filter: drop-shadow(0 0 8px rgba(255,255,255,0.5));
@@ -93,7 +95,7 @@
             to { filter: drop-shadow(0 0 12px rgba(255,255,255,0.8)); }
         }
 
-        /* Título con efecto de escritura */
+        /* Título */
         h2 {
             text-align: center;
             margin-bottom: 25px;
@@ -121,6 +123,7 @@
             margin: 10px 0;
             border: 2px solid var(--card-text);
             border-radius: 5px;
+            font-size: 16px;
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
@@ -139,7 +142,7 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 15px;
+            font-size: 16px;
             transition: background 0.3s ease, transform 0.2s ease;
             animation: pulse 2s infinite;
         }
@@ -174,6 +177,47 @@
             font-size: 12px;
             opacity: 0.8;
         }
+
+        /* 📱 RESPONSIVE PARA CELULARES */
+        @media (max-width: 480px) {
+            .login-container {
+                margin-top: 60px;
+                padding: 20px;
+            }
+
+            h2 {
+                font-size: 18px;
+            }
+
+            input {
+                font-size: 14px;
+                padding: 10px;
+            }
+
+            button {
+                font-size: 14px;
+                padding: 10px;
+            }
+
+            .logo {
+                width: 60px;
+            }
+        }
+
+        /* 💻 RESPONSIVE PARA PANTALLAS GRANDES */
+        @media (min-width: 1200px) {
+            .login-container {
+                width: 420px;
+            }
+
+            h2 {
+                font-size: 26px;
+            }
+
+            input, button {
+                font-size: 18px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -182,7 +226,6 @@
 
     <div class="login-container" id="loginBox">
 
-        <!-- Logo institucional -->
         <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Logo_Caja_de_Seguro_Social_Panam%C3%A1.svg/512px-Logo_Caja_de_Seguro_Social_Panam%C3%A1.svg.png" 
              class="logo" alt="CSS">
 
@@ -216,7 +259,7 @@
             particlesContainer.appendChild(p);
         }
 
-        /* Modo oscuro automático según la hora */
+        /* Modo oscuro automático */
         const hour = new Date().getHours();
         if (hour >= 18 || hour <= 6) {
             document.body.classList.add("dark-mode");
