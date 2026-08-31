@@ -3,50 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <title>Login - Dirección Nacional de Seguridad Institucional</title>
+
     <style>
         body {
             margin: 0;
             font-family: Arial, sans-serif;
-            background: #0A1A2A; /* Azul oscuro */
-            color: white;
+            background: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+            transition: background 0.5s ease, color 0.5s ease;
         }
 
+        :root {
+            --bg-color: #0A1A2A;
+            --text-color: white;
+            --card-bg: white;
+            --card-text: #0A1A2A;
+        }
+
+        /* Modo oscuro automático */
+        .dark-mode {
+            --bg-color: #000814;
+            --text-color: #e0e0e0;
+            --card-bg: #1b1b1b;
+            --card-text: #e0e0e0;
+        }
+
+        /* Fondo animado */
+        .particles {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: rgba(255,255,255,0.25);
+            border-radius: 50%;
+            animation: float 10s linear infinite;
+        }
+
+        @keyframes float {
+            from { transform: translateY(100vh); opacity: 0.2; }
+            to { transform: translateY(-10vh); opacity: 0.9; }
+        }
+
+        /* Contenedor del login */
         .login-container {
             width: 350px;
             margin: 120px auto;
-            background: white;
-            color: #0A1A2A;
+            background: var(--card-bg);
+            color: var(--card-text);
             padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0px 0px 15px rgba(255,255,255,0.2);
+            border-radius: 12px;
+            box-shadow: 0px 0px 25px rgba(255,255,255,0.25);
+            opacity: 0;
+            transform: translateY(40px) scale(0.98);
+            animation: fadeIn 1.4s ease forwards;
+            transition: transform 0.3s ease;
         }
 
+        .login-container:hover {
+            transform: scale(1.02);
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Logo animado */
+        .logo {
+            width: 80px;
+            display: block;
+            margin: 0 auto 15px auto;
+            filter: drop-shadow(0 0 8px rgba(255,255,255,0.5));
+            animation: glow 3s infinite alternate;
+        }
+
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 4px rgba(255,255,255,0.3)); }
+            to { filter: drop-shadow(0 0 12px rgba(255,255,255,0.8)); }
+        }
+
+        /* Título con efecto de escritura */
         h2 {
             text-align: center;
             margin-bottom: 25px;
+            font-size: 22px;
+            font-weight: bold;
+            overflow: hidden;
+            white-space: nowrap;
+            border-right: 2px solid var(--card-text);
+            width: 0;
+            animation: typing 2s steps(40) forwards, blink 0.7s infinite;
         }
 
+        @keyframes typing {
+            to { width: 100%; }
+        }
+
+        @keyframes blink {
+            50% { border-color: transparent; }
+        }
+
+        /* Inputs */
         input {
             width: 100%;
             padding: 12px;
             margin: 10px 0;
-            border: 1px solid #0A1A2A;
+            border: 2px solid var(--card-text);
             border-radius: 5px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
+        input:focus {
+            border-color: #123456;
+            box-shadow: 0 0 8px rgba(18,52,86,0.5);
+            outline: none;
+        }
+
+        /* Botón */
         button {
             width: 100%;
             padding: 12px;
-            background: #0A1A2A;
-            color: white;
+            background: var(--card-text);
+            color: var(--card-bg);
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-size: 15px;
+            transition: background 0.3s ease, transform 0.2s ease;
+            animation: pulse 2s infinite;
         }
 
         button:hover {
             background: #123456;
+            transform: scale(1.05);
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0px rgba(255,255,255,0.3); }
+            50% { box-shadow: 0 0 12px rgba(255,255,255,0.5); }
+            100% { box-shadow: 0 0 0px rgba(255,255,255,0.3); }
+        }
+
+        /* Shake error */
+        .shake {
+            animation: shakeAnim 0.4s;
+        }
+
+        @keyframes shakeAnim {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            50% { transform: translateX(6px); }
+            75% { transform: translateX(-6px); }
+            100% { transform: translateX(0); }
         }
 
         .footer {
@@ -59,15 +178,22 @@
 </head>
 <body>
 
-    <div class="login-container">
+    <div class="particles"></div>
+
+    <div class="login-container" id="loginBox">
+
+        <!-- Logo institucional -->
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Logo_Caja_de_Seguro_Social_Panam%C3%A1.svg/512px-Logo_Caja_de_Seguro_Social_Panam%C3%A1.svg.png" 
+             class="logo" alt="CSS">
+
         <h2>Acceso Institucional</h2>
 
-        <form action="dashboard.html" method="GET">
+        <form id="loginForm">
             <label>Usuario</label>
-            <input type="text" placeholder="Ingrese su usuario" required>
+            <input id="user" type="text" placeholder="Ingrese su usuario">
 
             <label>Contraseña</label>
-            <input type="password" placeholder="Ingrese su contraseña" required>
+            <input id="pass" type="password" placeholder="Ingrese su contraseña">
 
             <button type="submit">Ingresar</button>
         </form>
@@ -77,6 +203,43 @@
             Caja de Seguro Social
         </div>
     </div>
+
+    <script>
+        /* Partículas animadas */
+        const particlesContainer = document.querySelector('.particles');
+        for (let i = 0; i < 50; i++) {
+            const p = document.createElement('div');
+            p.classList.add('particle');
+            p.style.left = Math.random() * 100 + 'vw';
+            p.style.animationDuration = (6 + Math.random() * 6) + 's';
+            p.style.opacity = Math.random();
+            particlesContainer.appendChild(p);
+        }
+
+        /* Modo oscuro automático según la hora */
+        const hour = new Date().getHours();
+        if (hour >= 18 || hour <= 6) {
+            document.body.classList.add("dark-mode");
+        }
+
+        /* Validación con shake */
+        const form = document.getElementById("loginForm");
+        const loginBox = document.getElementById("loginBox");
+
+        form.addEventListener("submit", function(e) {
+            e.preventDefault();
+
+            const user = document.getElementById("user").value.trim();
+            const pass = document.getElementById("pass").value.trim();
+
+            if (user === "" || pass === "") {
+                loginBox.classList.add("shake");
+                setTimeout(() => loginBox.classList.remove("shake"), 500);
+            } else {
+                window.location.href = "dashboard.html";
+            }
+        });
+    </script>
 
 </body>
 </html>
