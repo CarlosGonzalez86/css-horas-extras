@@ -2,11 +2,16 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Login - Dirección Nacional de Seguridad Institucional</title>
+    <title>Login & Registro - Dirección Nacional de Seguridad Institucional</title>
 
     <style>
-        body {
+        * {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
             font-family: Arial, sans-serif;
             background: var(--bg-color);
             color: var(--text-color);
@@ -19,6 +24,9 @@
             --text-color: white;
             --card-bg: white;
             --card-text: #0A1A2A;
+            --primary-color: #123456;
+            --success-color: #28a745;
+            --error-color: #dc3545;
         }
 
         /* Modo oscuro automático */
@@ -53,11 +61,15 @@
             to { transform: translateY(-10vh); opacity: 0.9; }
         }
 
-        /* Contenedor del login */
-        .login-container {
+        /* Contenedor principal */
+        .container {
             width: 350px;
             max-width: 90%;
             margin: 120px auto;
+        }
+
+        /* Contenedor del login/registro */
+        .auth-container {
             background: var(--card-bg);
             color: var(--card-text);
             padding: 30px;
@@ -69,7 +81,7 @@
             transition: transform 0.3s ease;
         }
 
-        .login-container:hover {
+        .auth-container:hover {
             transform: scale(1.02);
         }
 
@@ -117,23 +129,32 @@
         }
 
         /* Inputs */
-        input {
+        input, select {
             width: 100%;
             padding: 12px;
             margin: 10px 0;
             border: 2px solid var(--card-text);
             border-radius: 5px;
             font-size: 16px;
+            background: var(--card-bg);
+            color: var(--card-text);
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
-        input:focus {
-            border-color: #123456;
+        input:focus, select:focus {
+            border-color: var(--primary-color);
             box-shadow: 0 0 8px rgba(18,52,86,0.5);
             outline: none;
         }
 
-        /* Botón */
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* Botón principal */
         button {
             width: 100%;
             padding: 12px;
@@ -143,12 +164,14 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
+            font-weight: bold;
             transition: background 0.3s ease, transform 0.2s ease;
             animation: pulse 2s infinite;
+            margin-top: 15px;
         }
 
         button:hover {
-            background: #123456;
+            background: var(--primary-color);
             transform: scale(1.05);
         }
 
@@ -156,6 +179,22 @@
             0% { box-shadow: 0 0 0px rgba(255,255,255,0.3); }
             50% { box-shadow: 0 0 12px rgba(255,255,255,0.5); }
             100% { box-shadow: 0 0 0px rgba(255,255,255,0.3); }
+        }
+
+        /* Botón secundario */
+        .btn-toggle {
+            background: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            padding: 10px;
+            margin-top: 15px;
+            animation: none;
+            font-size: 14px;
+        }
+
+        .btn-toggle:hover {
+            background: var(--primary-color);
+            color: var(--card-bg);
         }
 
         /* Shake error */
@@ -171,6 +210,28 @@
             100% { transform: translateX(0); }
         }
 
+        /* Mensajes */
+        .message {
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.error {
+            background: var(--error-color);
+            color: white;
+            display: block;
+        }
+
+        .message.success {
+            background: var(--success-color);
+            color: white;
+            display: block;
+        }
+
         .footer {
             text-align: center;
             margin-top: 15px;
@@ -178,9 +239,43 @@
             opacity: 0.8;
         }
 
+        /* Ocultar formularios */
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        /* Indicador de fortaleza de contraseña */
+        .password-strength {
+            margin-top: 5px;
+            height: 4px;
+            border-radius: 2px;
+            background: #ccc;
+        }
+
+        .password-strength.weak {
+            background: var(--error-color);
+        }
+
+        .password-strength.medium {
+            background: #ffc107;
+        }
+
+        .password-strength.strong {
+            background: var(--success-color);
+        }
+
+        .strength-text {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
         /* 📱 RESPONSIVE PARA CELULARES */
         @media (max-width: 480px) {
-            .login-container {
+            .auth-container {
                 margin-top: 60px;
                 padding: 20px;
             }
@@ -189,7 +284,7 @@
                 font-size: 18px;
             }
 
-            input {
+            input, select {
                 font-size: 14px;
                 padding: 10px;
             }
@@ -206,7 +301,7 @@
 
         /* 💻 RESPONSIVE PARA PANTALLAS GRANDES */
         @media (min-width: 1200px) {
-            .login-container {
+            .auth-container {
                 width: 420px;
             }
 
@@ -214,7 +309,7 @@
                 font-size: 26px;
             }
 
-            input, button {
+            input, button, select {
                 font-size: 18px;
             }
         }
@@ -224,31 +319,84 @@
 
     <div class="particles"></div>
 
-    <div class="login-container" id="loginBox">
+    <div class="container">
+        <div class="auth-container" id="authBox">
 
-        <img src="cajaLogo.png " 
-             class="logo" alt="CSS">
+            <img src="cajaLogo.png" class="logo" alt="Logo">
 
-        <h2>Acceso Institucional</h2>
+            <!-- FORMULARIO DE LOGIN -->
+            <div class="form-section active" id="loginForm">
+                <h2>Acceso Institucional</h2>
+                
+                <div class="message error" id="loginError"></div>
 
-        <form id="loginForm">
-            <label>Usuario</label>
-            <input id="user" type="text" placeholder="Ingrese su usuario">
+                <form id="formLogin">
+                    <label>Usuario</label>
+                    <input id="user" type="text" placeholder="Ingrese su usuario" required>
 
-            <label>Contraseña</label>
-            <input id="pass" type="password" placeholder="Ingrese su contraseña">
+                    <label>Contraseña</label>
+                    <input id="pass" type="password" placeholder="Ingrese su contraseña" required>
 
-            <button type="submit">Ingresar</button>
-        </form>
+                    <button type="submit">Ingresar</button>
+                </form>
 
-        <div class="footer">
-            Dirección Nacional de Seguridad Institucional<br>
-            Caja de Seguro Social
+                <button class="btn-toggle" onclick="toggleForms()">
+                    ¿No tienes cuenta? Regístrate aquí
+                </button>
+            </div>
+
+            <!-- FORMULARIO DE REGISTRO -->
+            <div class="form-section" id="registerForm">
+                <h2>Crear Cuenta</h2>
+                
+                <div class="message error" id="registerError"></div>
+                <div class="message success" id="registerSuccess"></div>
+
+                <form id="formRegister">
+                    <label>Nombre Completo</label>
+                    <input id="fullname" type="text" placeholder="Ej: Juan Pérez" required>
+
+                    <label>Email</label>
+                    <input id="email" type="email" placeholder="Ej: juan@example.com" required>
+
+                    <label>Usuario</label>
+                    <input id="username" type="text" placeholder="Ej: juan_perez" required>
+
+                    <label>Contraseña</label>
+                    <input id="newpass" type="password" placeholder="Mínimo 8 caracteres" required>
+                    <div class="password-strength" id="strengthBar"></div>
+                    <div class="strength-text" id="strengthText"></div>
+
+                    <label>Confirmar Contraseña</label>
+                    <input id="confirmpass" type="password" placeholder="Confirme su contraseña" required>
+
+                    <label>Departamento</label>
+                    <select id="department" required>
+                        <option value="">Seleccione un departamento</option>
+                        <option value="rh">Recursos Humanos</option>
+                        <option value="it">Tecnología</option>
+                        <option value="finance">Finanzas</option>
+                        <option value="operations">Operaciones</option>
+                        <option value="security">Seguridad</option>
+                    </select>
+
+                    <button type="submit">Registrarse</button>
+                </form>
+
+                <button class="btn-toggle" onclick="toggleForms()">
+                    ¿Ya tienes cuenta? Inicia sesión aquí
+                </button>
+            </div>
+
+            <div class="footer">
+                Dirección Nacional de Seguridad Institucional<br>
+                Caja de Seguro Social
+            </div>
         </div>
     </div>
 
     <script>
-        /* Partículas animadas */
+        /* ========== PARTÍCULAS ANIMADAS ========== */
         const particlesContainer = document.querySelector('.particles');
         for (let i = 0; i < 50; i++) {
             const p = document.createElement('div');
@@ -259,28 +407,164 @@
             particlesContainer.appendChild(p);
         }
 
-        /* Modo oscuro automático */
+        /* ========== MODO OSCURO AUTOMÁTICO ========== */
         const hour = new Date().getHours();
         if (hour >= 18 || hour <= 6) {
             document.body.classList.add("dark-mode");
         }
 
-        /* Validación con shake */
-        const form = document.getElementById("loginForm");
-        const loginBox = document.getElementById("loginBox");
+        /* ========== ALTERNANCIA ENTRE FORMULARIOS ========== */
+        function toggleForms() {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const authBox = document.getElementById('authBox');
 
-        form.addEventListener("submit", function(e) {
+            loginForm.classList.toggle('active');
+            registerForm.classList.toggle('active');
+            authBox.classList.remove('shake');
+            
+            // Limpiar mensajes
+            document.getElementById('loginError').style.display = 'none';
+            document.getElementById('registerError').style.display = 'none';
+            document.getElementById('registerSuccess').style.display = 'none';
+        }
+
+        /* ========== INDICADOR DE FORTALEZA DE CONTRASEÑA ========== */
+        document.getElementById('newpass').addEventListener('input', function() {
+            const password = this.value;
+            const strengthBar = document.getElementById('strengthBar');
+            const strengthText = document.getElementById('strengthText');
+            let strength = 'débil';
+            let className = '';
+
+            if (password.length < 8) {
+                strengthBar.className = 'password-strength weak';
+                strengthText.textContent = 'Mínimo 8 caracteres';
+            } else if (password.match(/^[a-zA-Z0-9]+$/) && password.length < 12) {
+                strengthBar.className = 'password-strength weak';
+                strengthText.textContent = '❌ Débil';
+            } else if (password.match(/[a-z]/) && password.match(/[A-Z]/) && password.match(/[0-9]/)) {
+                if (password.length < 12) {
+                    strengthBar.className = 'password-strength medium';
+                    strengthText.textContent = '⚠️ Media';
+                } else {
+                    strengthBar.className = 'password-strength strong';
+                    strengthText.textContent = '✅ Fuerte';
+                }
+            } else {
+                strengthBar.className = 'password-strength weak';
+                strengthText.textContent = '❌ Débil';
+            }
+        });
+
+        /* ========== VALIDACIÓN Y SUBMIT DEL LOGIN ========== */
+        document.getElementById('formLogin').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            const user = document.getElementById("user").value.trim();
-            const pass = document.getElementById("pass").value.trim();
+            const user = document.getElementById('user').value.trim();
+            const pass = document.getElementById('pass').value.trim();
+            const loginError = document.getElementById('loginError');
+            const authBox = document.getElementById('authBox');
 
-            if (user === "" || pass === "") {
-                loginBox.classList.add("shake");
-                setTimeout(() => loginBox.classList.remove("shake"), 500);
+            if (user === '' || pass === '') {
+                loginError.textContent = '❌ Por favor, completa todos los campos';
+                loginError.style.display = 'block';
+                authBox.classList.add('shake');
+                setTimeout(() => authBox.classList.remove('shake'), 500);
+            } else if (pass.length < 6) {
+                loginError.textContent = '❌ La contraseña debe tener al menos 6 caracteres';
+                loginError.style.display = 'block';
+                authBox.classList.add('shake');
+                setTimeout(() => authBox.classList.remove('shake'), 500);
             } else {
-                window.location.href = "dashboard.html";
+                loginError.style.display = 'none';
+                // Aquí iría la lógica para enviar al servidor o dashboard
+                console.log('Login válido:', { user, pass });
+                // window.location.href = 'dashboard.html';
+                alert('✅ Bienvenido, ' + user + '!');
             }
+        });
+
+        /* ========== VALIDACIÓN Y SUBMIT DEL REGISTRO ========== */
+        document.getElementById('formRegister').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const fullname = document.getElementById('fullname').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const username = document.getElementById('username').value.trim();
+            const newpass = document.getElementById('newpass').value;
+            const confirmpass = document.getElementById('confirmpass').value;
+            const department = document.getElementById('department').value;
+            const registerError = document.getElementById('registerError');
+            const registerSuccess = document.getElementById('registerSuccess');
+            const authBox = document.getElementById('authBox');
+
+            registerError.style.display = 'none';
+            registerSuccess.style.display = 'none';
+
+            // Validaciones
+            if (!fullname || !email || !username || !newpass || !confirmpass || !department) {
+                registerError.textContent = '❌ Por favor, completa todos los campos';
+                registerError.style.display = 'block';
+                authBox.classList.add('shake');
+                setTimeout(() => authBox.classList.remove('shake'), 500);
+                return;
+            }
+
+            if (!email.includes('@')) {
+                registerError.textContent = '❌ El email no es válido';
+                registerError.style.display = 'block';
+                authBox.classList.add('shake');
+                setTimeout(() => authBox.classList.remove('shake'), 500);
+                return;
+            }
+
+            if (username.length < 4) {
+                registerError.textContent = '❌ El usuario debe tener al menos 4 caracteres';
+                registerError.style.display = 'block';
+                authBox.classList.add('shake');
+                setTimeout(() => authBox.classList.remove('shake'), 500);
+                return;
+            }
+
+            if (newpass.length < 8) {
+                registerError.textContent = '❌ La contraseña debe tener al menos 8 caracteres';
+                registerError.style.display = 'block';
+                authBox.classList.add('shake');
+                setTimeout(() => authBox.classList.remove('shake'), 500);
+                return;
+            }
+
+            if (newpass !== confirmpass) {
+                registerError.textContent = '❌ Las contraseñas no coinciden';
+                registerError.style.display = 'block';
+                authBox.classList.add('shake');
+                setTimeout(() => authBox.classList.remove('shake'), 500);
+                return;
+            }
+
+            // Si todo es válido
+            registerSuccess.textContent = '✅ ¡Cuenta creada exitosamente! Redirigiendo...';
+            registerSuccess.style.display = 'block';
+
+            const userData = {
+                fullname,
+                email,
+                username,
+                password: newpass,
+                department
+            };
+
+            console.log('Nuevo usuario registrado:', userData);
+
+            // Simular envío al servidor
+            setTimeout(() => {
+                // Aquí irá la lógica para enviar al servidor
+                // window.location.href = 'dashboard.html';
+                alert('✅ ¡Bienvenido, ' + fullname + '! Tu cuenta ha sido creada.');
+                document.getElementById('formRegister').reset();
+                toggleForms();
+            }, 2000);
         });
     </script>
 
