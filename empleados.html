@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Búsqueda de Empleados</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0A1A2A, #1a3a4a);
+            color: white;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            text-shadow: 0 2px 10px rgba(40,167,69,0.3);
+        }
+
+        /* Barra de búsqueda */
+        .search-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        input[type="text"], input[type="file"], select {
+            padding: 12px;
+            border: 2px solid #123456;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.9);
+            color: #0A1A2A;
+            font-size: 16px;
+            flex: 1;
+            min-width: 200px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus, input[type="file"]:focus, select:focus {
+            outline: none;
+            border-color: #28a745;
+            box-shadow: 0 0 12px rgba(40,167,69,0.6);
+            background: white;
+        }
+
+        button {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #123456, #1a5a7a);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #28a745, #20c247);
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(40,167,69,0.4);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        /* Grid de resultados */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .employee-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border: 2px solid transparent;
+            backdrop-filter: blur(10px);
+        }
+
+        .employee-card:hover {
+            transform: translateY(-12px) scale(1.02);
+            box-shadow: 0 12px 30px rgba(40,167,69,0.4);
+            border-color: #28a745;
+        }
+
+        .employee-photo {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            background: linear-gradient(135deg, #333, #555);
+            transition: transform 0.3s ease;
+        }
+
+        .employee-card:hover .employee-photo {
+            transform: scale(1.08);
+        }
+
+        .employee-info {
+            padding: 20px;
+        }
+
+        .employee-info h3 {
+            margin-bottom: 12px;
+            font-size: 18px;
+            color: #28a745;
+            font-weight: bold;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .employee-info p {
+            font-size: 14px;
+            margin: 8px 0;
+            opacity: 0.95;
+            line-height: 1.5;
+        }
+
+        .employee-info strong {
+            color: #ffeb3b;
+            font-weight: bold;
+        }
+
+        .employee-label {
+            display: inline-block;
+            background: rgba(40,167,69,0.2);
+            color: #28a745;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            margin-top: 8px;
+            border: 1px solid #28a745;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 40px;
+            font-size: 18px;
+            opacity: 0.7;
+            grid-column: 1 / -1;
+        }
+
+        .no-results-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .filter-btn {
+            padding: 10px 18px;
+            background: rgba(18,52,86,0.3);
+            border: 2px solid #123456;
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .filter-btn:hover {
+            background: rgba(40,167,69,0.4);
+            border-color: #28a745;
+            transform: translateY(-2px);
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #28a745, #20c247);
+            border-color: #28a745;
+            box-shadow: 0 4px 12px rgba(40,167,69,0.5);
+        }
+
+        .stats {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        .stats strong {
+            color: #28a745;
+            font-size: 18px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 4px solid rgba(40,167,69,0.2);
+            border-top-color: #28a745;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .search-container {
+                flex-direction: column;
+            }
+
+            input[type="text"], input[type="file"], select {
+                min-width: 100%;
+            }
+
+            .results-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 15px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .filter-buttons {
+                flex-direction: column;
+            }
+
+            .filter-btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0;
+            }
+
+            .search-container, .filter-buttons {
+                border-radius: 0;
+                margin-left: -20px;
+                margin-right: -20px;
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .employee-photo {
+                height: 180px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🔍 Búsqueda de Empleados</h1>
+
+        <!-- Input para cargar Excel -->
+        <div class="search-container">
+            <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" placeholder="Carga tu Excel aquí">
+            <input type="text" id="searchInput" placeholder="Busca por nombre, email o departamento...">
+            <select id="departmentFilter">
+                <option value="">Todos los departamentos</option>
+            </select>
+            <button onclick="searchEmployees()">🔎 Buscar</button>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="stats" id="stats" style="display:none;">
+            Se encontraron <strong id="resultCount">0</strong> empleados
+        </div>
+
+        <!-- Filtros rápidos -->
+        <div class="filter-buttons" id="filterButtons"></div>
+
+        <!-- Resultados -->
+        <div class="results-grid" id="resultsGrid">
+            <div class="no-results">
+                <div class="no-results-icon">📁</div>
+                <div>Carga un archivo Excel para comenzar la búsqueda</div>
+                <div style="font-size: 12px; margin-top: 10px; opacity: 0.6;">
+                    Formatos soportados: .xlsx, .xls, .csv
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js"></script>
+    <script>
+        let allEmployees = [];
+
+        // Cargar archivo Excel
+        document.getElementById('excelFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const grid = document.getElementById('resultsGrid');
+            grid.innerHTML = '<div class="loading"><div class="loading-spinner"></div><div>Cargando archivo...</div></div>';
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const json = XLSX.utils.sheet_to_json(worksheet);
+
+                    // Validar estructura
+                    if (json.length === 0) {
+                        alert('⚠️ El archivo está vacío');
+                        grid.innerHTML = '<div class="no-results"><div class="no-results-icon">❌</div><div>El archivo no contiene datos</div></div>';
+                        return;
+                    }
+
+                    allEmployees = json.map(row => ({
+                        nombre: (row.Nombre || row.nombre || '').toString().trim(),
+                        email: (row.Email || row.email || '').toString().trim(),
+                        departamento: (row.Departamento || row.departamento || '').toString().trim(),
+                        foto: (row.Foto || row.foto || '').toString().trim() || 'https://via.placeholder.com/280x220?text=Sin+Foto'
+                    })).filter(emp => emp.nombre); // Filtrar filas vacías
+
+                    console.log('✅ Empleados cargados:', allEmployees.length);
+
+                    // Llenar filtro de departamentos
+                    const departments = [...new Set(allEmployees.map(e => e.departamento).filter(d => d))];
+                    const filterSelect = document.getElementById('departmentFilter');
+                    filterSelect.innerHTML = '<option value="">Todos los departamentos</option>';
+                    departments.forEach(dept => {
+                        const option = document.createElement('option');
+                        option.value = dept;
+                        option.textContent = dept;
+                        filterSelect.appendChild(option);
+                    });
+
+                    // Crear botones de filtro rápido
+                    const filterContainer = document.getElementById('filterButtons');
+                    filterContainer.innerHTML = '';
+                    departments.forEach(dept => {
+                        const count = allEmployees.filter(e => e.departamento === dept).length;
+                        const btn = document.createElement('button');
+                        btn.className = 'filter-btn';
+                        btn.textContent = `${dept} (${count})`;
+                        btn.onclick = () => filterByDepartment(dept, btn);
+                        filterContainer.appendChild(btn);
+                    });
+
+                    // Botón para limpiar filtros
+                    const clearBtn = document.createElement('button');
+                    clearBtn.className = 'filter-btn';
+                    clearBtn.textContent = '✕ Limpiar filtros';
+                    clearBtn.onclick = clearFilters;
+                    filterContainer.appendChild(clearBtn);
+
+                    searchEmployees();
+                    alert(`✅ Se cargaron ${allEmployees.length} empleados correctamente`);
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('❌ Error al leer el archivo: ' + error.message);
+                    grid.innerHTML = '<div class="no-results"><div class="no-results-icon">❌</div><div>Error al leer el archivo</div></div>';
+                }
+            };
+
+            reader.readAsArrayBuffer(file);
+        });
+
+        // Búsqueda en tiempo real
+        document.getElementById('searchInput').addEventListener('input', searchEmployees);
+        document.getElementById('departmentFilter').addEventListener('change', searchEmployees);
+
+        function searchEmployees() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const department = document.getElementById('departmentFilter').value;
+
+            let filtered = allEmployees.filter(emp => {
+                const matchSearch = emp.nombre.toLowerCase().includes(searchTerm) ||
+                                   emp.email.toLowerCase().includes(searchTerm) ||
+                                   emp.departamento.toLowerCase().includes(searchTerm);
+                const matchDept = !department || emp.departamento === department;
+                return matchSearch && matchDept;
+            });
+
+            displayResults(filtered);
+        }
+
+        function filterByDepartment(dept, button) {
+            // Activar/desactivar botón
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+
+            // Filtrar resultados
+            const filtered = allEmployees.filter(emp => emp.departamento === dept);
+            displayResults(filtered);
+        }
+
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('departmentFilter').value = '';
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            searchEmployees();
+        }
+
+        function displayResults(employees) {
+            const grid = document.getElementById('resultsGrid');
+            const stats = document.getElementById('stats');
+
+            if (employees.length === 0) {
+                grid.innerHTML = '<div class="no-results"><div class="no-results-icon">🔍</div><div>No se encontraron empleados</div></div>';
+                stats.style.display = 'none';
+                return;
+            }
+
+            document.getElementById('resultCount').textContent = employees.length;
+            stats.style.display = 'block';
+
+            grid.innerHTML = employees.map(emp => `
+                <div class="employee-card" onclick="copyEmail('${emp.email}')">
+                    <img src="${emp.foto}" alt="${emp.nombre}" class="employee-photo" onerror="this.src='https://via.placeholder.com/280x220?text=Sin+Foto'" loading="lazy">
+                    <div class="employee-info">
+                        <h3>${escapeHtml(emp.nombre)}</h3>
+                        <p>
+                            <strong>📧 Email:</strong><br>
+                            ${escapeHtml(emp.email)}
+                        </p>
+                        <span class="employee-label">${escapeHtml(emp.departamento)}</span>
+                        <p style="font-size: 12px; margin-top: 10px; opacity: 0.6;">Haz clic para copiar email</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function copyEmail(email) {
+            navigator.clipboard.writeText(email).then(() => {
+                alert('✅ Email copiado: ' + email);
+            }).catch(() => {
+                alert('Email: ' + email);
+            });
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+    </script>
+
+</body>
+</html>
